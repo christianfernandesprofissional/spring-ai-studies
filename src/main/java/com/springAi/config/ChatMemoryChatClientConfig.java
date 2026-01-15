@@ -34,11 +34,12 @@ public class ChatMemoryChatClientConfig {
 
         //Criando os Advisors para que eles entrem na lista de advisors padrão
         Advisor loggerAdvisor = new SimpleLoggerAdvisor();
+        Advisor tokenUsageAdvisor = new TokenUsageAuditAdvisor(); //advisor adicionado quando implementei o uso do RAG usando um documento como base de informações
         Advisor memoryAdvisor = MessageChatMemoryAdvisor.builder(chatMemory).build();
 
 
         return chatClientBuilder
-                .defaultAdvisors(List.of(loggerAdvisor, memoryAdvisor)) //Passando os advisors
+                .defaultAdvisors(List.of(loggerAdvisor, memoryAdvisor, tokenUsageAdvisor)) //Passando os advisors
                 .build();
 
     }
