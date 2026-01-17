@@ -20,6 +20,7 @@ import static org.springframework.ai.chat.memory.ChatMemory.CONVERSATION_ID;
 public class RagController {
 
     private final ChatClient chatClient;
+    private final ChatClient webSearchChatClient;
     private final VectorStore vectorStore;
 
     @Value("classpath:/promptTemplates/systemPromptRandomDataTemplate.st")
@@ -28,9 +29,11 @@ public class RagController {
     @Value("classpath:/promptTemplates/systemPromptTemplateRAG.st")
     Resource hrSystemTemplate;
 
-    public RagController(@Qualifier("chatMemoryChatClient") ChatClient chatClient, VectorStore vectorStore) {
+    public RagController(@Qualifier("chatMemoryChatClient") ChatClient chatClient,
+                         @Qualifier("webSearchRAGChatClient") ChatClient webSearchChatClient,VectorStore vectorStore) {
         this.chatClient = chatClient;
         this.vectorStore = vectorStore;
+        this.webSearchChatClient = webSearchChatClient;
     }
 
     @GetMapping("/random/chat")
@@ -40,24 +43,35 @@ public class RagController {
         /* SearchRequest é um objeto de descrição de busca (Search Descriptor).
          * Ela não executa nada.
          * Ela descreve como a busca deve ser executada por um VectorStore.*/
+        /*
         SearchRequest searchRequest =
-                //topK(3) -> número de documentos que serão considerados durante a busca a partir do topo da lista
-                //.similarityThreshold(0.5) -> porcentagem mínima de similaridade com a mensagem que o documento tem que ter para ser usado durante a busca
+                //-- topK(3) -> número de documentos que serão considerados durante a busca a partir do topo da lista
+                //-- .similarityThreshold(0.5) -> porcentagem mínima de similaridade com a mensagem que o documento tem que ter para ser usado durante a busca
               SearchRequest.builder().query(message).topK(3).similarityThreshold(0.5).build();
 
         List<Document> similarDocs =  vectorStore.similaritySearch(searchRequest); //Busca feita no VectorStore
 
-        //A linha abaixo pega os documentos retornados pelo Vector Store e transforma em um único texto contínuo, que será usado como contexto para o LLM.
+        //--A linha abaixo pega os documentos retornados pelo Vector Store e transforma em um único texto contínuo, que será usado como contexto para o LLM.
         String similarContext = similarDocs.stream()
                 .map(Document::getText)
                 .collect(Collectors.joining(System.lineSeparator()));
+        */
+        //Toda a lógica mostrada acima pode ser substituida se nas configurações, você implementar um advisor chamado RetrievalAugmentationAdvisor, este advisor foi configurado na classe: ChatMemoryChatClientConfig
 
+        /* --
         String answer = chatClient.prompt()
-                .system(promptSystemSpec -> promptSystemSpec.text(promptTemplate)
+                .system(promptSystemSpec -> promptSystemSpec.text(promptTemplate) //--configuração de promptSystemSpec desnecessária caso você tenha implementado o RetrievalAugmentationAdvisor
                         .param("documents", similarContext)) //passo a minha template com a lista de frases gerada em RandomDataLoader
                 .advisors(a -> a.param(CONVERSATION_ID, username))
                 .user(message)
                 .call().content();
+         */
+
+        String answer = chatClient.prompt()
+                .advisors(a -> a.param(CONVERSATION_ID, username))
+                .user(message)
+                .call().content();
+
         return ResponseEntity.ok(answer);
     }
 
@@ -66,6 +80,9 @@ public class RagController {
     @GetMapping("/document/chat")
     public ResponseEntity<String> documentChat(@RequestHeader("username") String username,
                                                @RequestParam("message") String message) {
+
+
+        /* //--Trecho comentado após a implementação do RetrievalAugmentationAdvisor que foi configurado na classe ChatMemoryChatClientConfig
         SearchRequest searchRequest =
                 SearchRequest.builder().query(message).topK(3).similarityThreshold(0.5).build();
         List<Document> similarDocs =  vectorStore.similaritySearch(searchRequest);
@@ -73,13 +90,31 @@ public class RagController {
                 .map(Document::getText)
                 .collect(Collectors.joining(System.lineSeparator()));
         String answer = chatClient.prompt()
-                .system(promptSystemSpec -> promptSystemSpec.text(hrSystemTemplate)
+                .system(promptSystemSpec -> promptSystemSpec.text(hrSystemTemplate) //--configuração de promptSystemSpec desnecessária caso você tenha implementado o RetrievalAugmentationAdvisor
                                 .param("documents", similarContext))
+                .advisors(a -> a.param(CONVERSATION_ID, username))
+                .user(message)
+                .call().content();
+
+         */
+
+        String answer = chatClient.prompt()
                 .advisors(a -> a.param(CONVERSATION_ID, username))
                 .user(message)
                 .call().content();
         return ResponseEntity.ok(answer);
     }
 
+
+    @GetMapping("/web-search/chat")
+    public ResponseEntity<String> webSearchChat(@RequestHeader("username")
+                                                String username, @RequestParam("message") String message) {
+
+        String answer =webSearchChatClient.prompt()
+                .advisors(a -> a.param(CONVERSATION_ID, username))
+                .user(message)
+                .call().content();
+        return ResponseEntity.ok(answer);
+    }
 
 }
