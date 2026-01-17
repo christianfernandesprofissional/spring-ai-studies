@@ -14,7 +14,7 @@ import org.springframework.web.client.RestClient;
 
 import java.util.List;
 
-@Configuration
+//@Configuration //Comentado para tirar essa configuração, já que para funcionar a busca web, é necessário uma API_KEY da LLM
 public class WebSearchRAGChatClientConfig {
 
     @Bean("webSearchRAGChatClient")

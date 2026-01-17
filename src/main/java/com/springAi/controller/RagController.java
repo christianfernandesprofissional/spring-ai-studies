@@ -20,7 +20,7 @@ import static org.springframework.ai.chat.memory.ChatMemory.CONVERSATION_ID;
 public class RagController {
 
     private final ChatClient chatClient;
-    private final ChatClient webSearchChatClient;
+    //private final ChatClient webSearchChatClient; //Comentado devido a falta do WebSearchRAGChatClientConfig
     private final VectorStore vectorStore;
 
     @Value("classpath:/promptTemplates/systemPromptRandomDataTemplate.st")
@@ -29,11 +29,11 @@ public class RagController {
     @Value("classpath:/promptTemplates/systemPromptTemplateRAG.st")
     Resource hrSystemTemplate;
 
-    public RagController(@Qualifier("chatMemoryChatClient") ChatClient chatClient,
-                         @Qualifier("webSearchRAGChatClient") ChatClient webSearchChatClient,VectorStore vectorStore) {
+    public RagController(@Qualifier("chatMemoryChatClient") ChatClient chatClient, VectorStore vectorStore){
+                         //@Qualifier("webSearchRAGChatClient") ChatClient webSearchChatClient) { //Comentado devido a falta do WebSearchRAGChatClientConfig
         this.chatClient = chatClient;
         this.vectorStore = vectorStore;
-        this.webSearchChatClient = webSearchChatClient;
+        //this.webSearchChatClient = webSearchChatClient; //Comentado devido a falta do WebSearchRAGChatClientConfig
     }
 
     @GetMapping("/random/chat")
@@ -110,11 +110,12 @@ public class RagController {
     public ResponseEntity<String> webSearchChat(@RequestHeader("username")
                                                 String username, @RequestParam("message") String message) {
 
-        String answer =webSearchChatClient.prompt()
-                .advisors(a -> a.param(CONVERSATION_ID, username))
-                .user(message)
-                .call().content();
-        return ResponseEntity.ok(answer);
+       // String answer =webSearchChatClient.prompt() //Comentado devido a falta do WebSearchRAGChatClientConfig
+       //         .advisors(a -> a.param(CONVERSATION_ID, username)) //Comentado devido a falta do WebSearchRAGChatClientConfig
+       //         .user(message) //Comentado devido a falta do WebSearchRAGChatClientConfig
+       //         .call().content(); //Comentado devido a falta do WebSearchRAGChatClientConfig
+       // return ResponseEntity.ok(answer); //Comentado devido a falta do WebSearchRAGChatClientConfig
+        return ResponseEntity.ok("answer");
     }
 
 }
