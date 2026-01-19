@@ -7,43 +7,36 @@ import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.tool.execution.DefaultToolExecutionExceptionProcessor;
+import org.springframework.ai.tool.execution.ToolExecutionExceptionProcessor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
 
 import java.util.List;
 
 @Configuration
-public class TimeChatClientConfig {
+public class HelpDeskChatClientConfig {
 
-    @Bean("timeChatClient")
+    @Value("classpath:/promptTemplates/helpDeskSystemPromptTemplate.st")
+    Resource systemPromptTemplate;
+
+    @Bean("helpDeskChatClient")
     public ChatClient chatClient(ChatClient.Builder chatClientBuilder,
                                  ChatMemory chatMemory, TimeTools timeTools) {
         Advisor loggerAdvisor = new SimpleLoggerAdvisor();
         Advisor tokenUsageAdvisor = new TokenUsageAuditAdvisor();
         Advisor memoryAdvisor = MessageChatMemoryAdvisor.builder(chatMemory).build();
         return chatClientBuilder
-                .defaultSystem("""
-                        You are an internal HR assistant. You assist employees telling them the time in the place they ask.
-                        You have access to tools.
-                        When calling a tool, you MUST return a JSON object with:
-                        - name
-                        - arguments (not parameters)
-                        
-                        Example:
-                        {
-                          "name": "getCurrentTime",
-                          "arguments": {
-                            "timeZone": "America/Sao_Paulo"
-                          }
-                        }
-                        
-                        After receiving the answer from the tool, you have to answer the time in this format: hh:mm
-                        you don't have to say the process you used to convert the time from the tool.
-                        
-                        """
-                ) //Este prompt foi necessário devido as limitações do Ollama, ele não é muito adaptado ao ToolCalling, por isso um prompt melhor pode ajudá-lo a se comportar corretamente
+                .defaultSystem(systemPromptTemplate)
                 .defaultTools(timeTools) //-- Registra um ou mais beans que contêm métodos anotados com @Tool como ferramentas disponíveis para o modelo de IA.
                 .defaultAdvisors(List.of(loggerAdvisor, memoryAdvisor, tokenUsageAdvisor))
                 .build();
+    }
+
+    @Bean //Implementação para que os erros gerados pela aplicação sejam enviados para o Client
+    ToolExecutionExceptionProcessor toolExecutionExceptionProcessor() {
+        return new DefaultToolExecutionExceptionProcessor(true); //A implementação padrão é 'false', então uma mensagem é enviada no lugar do erro
     }
 }

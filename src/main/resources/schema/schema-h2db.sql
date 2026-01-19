@@ -2,7 +2,7 @@ CREATE TABLE SPRING_AI_CHAT_MEMORY (
                                        conversation_id VARCHAR(36) NOT NULL,
                                        content LONGVARCHAR NOT NULL,
                                        type VARCHAR(10) NOT NULL,
-                                       "timestamp" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+                                       timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE INDEX SPRING_AI_CHAT_MEMORY_CONVERSATION_ID_TIMESTAMP_IDX ON SPRING_AI_CHAT_MEMORY(conversation_id, "timestamp" DESC);
