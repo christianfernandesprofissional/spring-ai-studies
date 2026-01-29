@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "/home/christian/.nvm/versions/node/v22.21.0/bin/node",
+      "args": [
+        "/home/christian/.nvm/versions/node/v22.21.0/lib/node_modules/@modelcontextprotocol/server-filesystem/dist/index.js",
+        "/home/christian/mcp-servers"
+      ],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}
